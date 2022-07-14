@@ -5,7 +5,7 @@ Namely, we test bounds checks on points and scalars involved in a signature, alo
 
 We hope this helps outline the measures needed to implement the FIPS 186-5 and RFC 8032 standards rigorously.
 
-For more information, read [the original paper](https://eprint.iacr.org/2020/1244), published at [SSR'20](https://ssr2020.mozilla.org/accepted-papers).
+For more information, read the original paper[^CGN20e], published at [SSR'20](https://ssr2020.mozilla.org/accepted-papers).
 
 You can run this utility with `RUST_LOG=debug cargo run` to get a list of the test vectors and their intended test conditions.
 
@@ -84,6 +84,7 @@ grep '\[dev-dependencies\]' Cargo.toml -A 1000
  ---------------------------------------------------------------
 |Library        | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11|
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---|
+|[CGN20e] Alg.2 | X | X | V | V | V | V | X | X | X | X | X | X |
 |BoringSSL      | V | V | V | V | X | X | X | X | X | X | X | V |
 |Dalek          | V | V | V | V | X | X | X | X | X | X | X | V |
 |Dalek strict   | X | X | X | V | X | X | X | X | X | X | X | X |
@@ -107,3 +108,7 @@ Special thanks go to Yolan Romailler, Rajath Shanbag and Rob Starkey for contrib
 ## License
 
 This project is [Apache 2.0 licensed](./LICENSE).
+
+## References
+
+[^CGN20e]: **Taming the many EdDSAs**, by Konstantinos Chalkias and François Garillot and Valeria Nikolaenko, *in Cryptology ePrint Archive, Report 2020/1244*, 2020, [[URL]](https://ia.cr/2020/1244)

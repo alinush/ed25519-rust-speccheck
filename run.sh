@@ -19,6 +19,11 @@ main > results.md  2>/dev/null
 
 # This seems to filter out the debug output of `cargo test` into a file called `results.mdre`
 sed -ire  '/^|/!d' results.md
-sort -f results.md -o results.md
+sort -f results.md -o results-temp.md
+
+truncate --size 0 results.md
+echo "|[CGN20e] Alg.2 | X | X | V | V | V | V | X | X | X | X | X | X |" >results.md
+cat results-temp.md >>results.md
+rm results-temp.md
 
 cat results.md
