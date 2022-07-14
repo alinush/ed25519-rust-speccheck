@@ -33,7 +33,7 @@ use string_builder::Builder;
 //
 // The following byte arrays have been ported from curve25519-dalek /backend/serial/u64/constants.rs
 // and they represent the serialised version of the CompressedEdwardsY points.
-const EIGHT_TORSION: [[u8; 32]; 8] = [
+pub const EIGHT_TORSION: [[u8; 32]; 8] = [
     [
         1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0,
@@ -126,7 +126,7 @@ pub fn check_slice_size<'a>(
     Ok(slice)
 }
 
-fn deserialize_point(pt: &[u8]) -> Result<EdwardsPoint> {
+pub fn deserialize_point(pt: &[u8]) -> Result<EdwardsPoint> {
     let mut bytes = [0u8; 32];
     bytes.copy_from_slice(check_slice_size(pt, 32, "pt")?);
 
@@ -152,11 +152,11 @@ fn deserialize_signature(sig_bytes: &[u8]) -> Result<(EdwardsPoint, Scalar)> {
     Ok((r, s))
 }
 
-fn serialize_signature(r: &EdwardsPoint, s: &Scalar) -> Vec<u8> {
+pub fn serialize_signature(r: &EdwardsPoint, s: &Scalar) -> Vec<u8> {
     [&r.compress().as_bytes()[..], &s.as_bytes()[..]].concat()
 }
 
-fn compute_hram(message: &[u8], pub_key: &EdwardsPoint, signature_r: &EdwardsPoint) -> Scalar {
+pub fn compute_hram(message: &[u8], pub_key: &EdwardsPoint, signature_r: &EdwardsPoint) -> Scalar {
     let k_bytes = Sha512::default()
         .chain(&signature_r.compress().as_bytes())
         .chain(&pub_key.compress().as_bytes()[..])
@@ -196,7 +196,7 @@ fn compute_hram_with_pk_array(
     Scalar::from_bytes_mod_order_wide(&k_output)
 }
 
-fn verify_cofactored(
+pub fn verify_cofactored(
     message: &[u8],
     pub_key: &EdwardsPoint,
     unpacked_signature: &(EdwardsPoint, Scalar),
@@ -205,7 +205,7 @@ fn verify_cofactored(
     verify_final_cofactored(pub_key, unpacked_signature, &k)
 }
 
-fn verify_cofactorless(
+pub fn verify_cofactorless(
     message: &[u8],
     pub_key: &EdwardsPoint,
     unpacked_signature: &(EdwardsPoint, Scalar),
@@ -229,7 +229,7 @@ fn verify_final_cofactored(
     hash: &Scalar,
 ) -> Result<()> {
     let rprime = EdwardsPoint::vartime_double_scalar_mul_basepoint(
-        &hash,
+        hash,
         &pub_key.neg(),
         &unpacked_signature.1,
     );
@@ -266,7 +266,7 @@ fn verify_final_cofactorless(
     hash: &Scalar,
 ) -> Result<()> {
     let rprime = EdwardsPoint::vartime_double_scalar_mul_basepoint(
-        &hash,
+        hash,
         &pub_key.neg(),
         &unpacked_signature.1,
     );
@@ -283,11 +283,11 @@ fn verify_final_cofactorless(
 
 pub struct TestVector {
     #[allow(dead_code)]
-    message: [u8; 32],
+    pub message: [u8; 32],
     #[allow(dead_code)]
-    pub_key: [u8; 32],
+    pub pub_key: [u8; 32],
     #[allow(dead_code)]
-    signature: Vec<u8>,
+    pub signature: Vec<u8>,
 }
 
 impl Serialize for TestVector {
@@ -303,7 +303,7 @@ impl Serialize for TestVector {
     }
 }
 
-fn new_rng() -> impl RngCore {
+pub fn new_rng() -> impl RngCore {
     let mut pi_bytes = [0u8; 32];
     for i in 0..4 {
         pi_bytes[8 * i..8 * i + 8].copy_from_slice(&std::f64::consts::PI.to_le_bytes()[..]);
@@ -961,7 +961,7 @@ pub fn non_zero_mixed_small_non_canonical() -> Result<Vec<TestVector>> {
     Ok(vec)
 }
 
-fn generate_test_vectors() -> Vec<TestVector> {
+pub fn generate_test_vectors() -> Vec<TestVector> {
     let mut info = Builder::default();
     info.append("|  |    msg |    sig |  S   |    A  |    R  | cof-ed | cof-less |        comment        |\n");
     info.append("|---------------------------------------------------------------------------------------|\n");
@@ -1047,7 +1047,7 @@ fn generate_test_vectors() -> Vec<TestVector> {
     vec
 }
 
-fn main() -> Result<()> {
+pub fn main() -> Result<()> {
     env_logger::init();
     let vec = generate_test_vectors();
 
@@ -1068,227 +1068,4 @@ fn main() -> Result<()> {
         file.write_all(hex::encode(&tv.signature).as_bytes())?;
     }
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use diem_crypto;
-    use ed25519_dalek::{PublicKey, Signature, Verifier};
-    use ed25519_zebra::{Signature as ZSignature, VerificationKey as ZPublicKey};
-    use ring::signature;
-    use std::convert::TryFrom;
-    use untrusted;
-
-    fn unpack_test_vector_dalek(t: &TestVector) -> (PublicKey, Signature) {
-        let pk = PublicKey::from_bytes(&t.pub_key[..]).unwrap();
-        let sig = Signature::try_from(&t.signature[..]).unwrap();
-        (pk, sig)
-    }
-
-    fn unpack_test_vector_hacl(
-        t: &TestVector,
-    ) -> (hacl_star::ed25519::PublicKey, hacl_star::ed25519::Signature) {
-        let mut sig_bytes = [0u8; 64];
-        sig_bytes.copy_from_slice(&t.signature[..]);
-
-        let pk = hacl_star::ed25519::PublicKey(t.pub_key);
-        let sig = hacl_star::ed25519::Signature(sig_bytes);
-        (pk, sig)
-    }
-
-    fn unpack_test_vector_zebra(t: &TestVector) -> (ZPublicKey, ZSignature) {
-        let pk = ZPublicKey::try_from(&t.pub_key[..]).unwrap();
-        let sig = ZSignature::try_from(&t.signature[..]).unwrap();
-        (pk, sig)
-    }
-
-    fn ring_verify(t: &TestVector) -> Result<()> {
-        let pk = untrusted::Input::from(&t.pub_key[..]);
-        let sig = untrusted::Input::from(&t.signature[..]);
-        let msg = untrusted::Input::from(&t.message[..]);
-        <signature::EdDSAParameters as signature::VerificationAlgorithm>::verify(
-            &signature::ED25519,
-            pk,
-            msg,
-            sig,
-        )
-        .map_err(|_| anyhow!("signature verification failed"))
-    }
-
-    #[test]
-    fn test_diem() {
-        let vec = generate_test_vectors();
-
-        print!("\n|libra-crypto   |");
-        for tv in vec.iter() {
-            let pk = match diem_crypto::ed25519::Ed25519PublicKey::try_from(&tv.pub_key[..]) {
-                Ok(pk) => pk,
-                Err(_e) => {
-                    print!(" X |");
-                    continue;
-                }
-            };
-            let sig = match diem_crypto::ed25519::Ed25519Signature::try_from(&tv.signature[..]) {
-                Ok(sig) => sig,
-                Err(_e) => {
-                    print!(" X |");
-                    continue;
-                }
-            };
-            match diem_crypto::traits::Signature::verify_arbitrary_msg(&sig, &tv.message[..], &pk) {
-                Ok(_v) => print!(" V |"),
-                Err(_e) => print!(" X |"),
-            }
-        }
-        println!();
-    }
-
-    #[test]
-    fn test_hacl() {
-        let vec = generate_test_vectors();
-
-        print!("\n|Hacl*          |");
-        for tv in vec.iter() {
-            let (pk, sig) = unpack_test_vector_hacl(&tv);
-            if pk.verify(&tv.message[..], &sig) {
-                print!(" V |");
-            } else {
-                print!(" X |");
-            }
-        }
-        println!();
-    }
-
-    #[test]
-    fn test_dalek() {
-        let vec = generate_test_vectors();
-
-        print!("\n|Dalek          |");
-        for tv in vec.iter() {
-            match Signature::try_from(&tv.signature[..]) {
-                Ok(_v) => {}
-                Err(_e) => {
-                    print!(" X |");
-                    continue;
-                }
-            }
-
-            let (pk, sig) = unpack_test_vector_dalek(&tv);
-            match pk.verify(&tv.message[..], &sig) {
-                Ok(_v) => print!(" V |"),
-                Err(_e) => print!(" X |"),
-            }
-        }
-        println!();
-    }
-
-    #[test]
-    fn test_dalek_verify_strict() {
-        let vec = generate_test_vectors();
-
-        print!("\n|Dalek strict   |");
-        for tv in vec.iter() {
-            match Signature::try_from(&tv.signature[..]) {
-                Ok(_v) => {}
-                Err(_e) => {
-                    print!(" X |");
-                    continue;
-                }
-            }
-
-            let (pk, sig) = unpack_test_vector_dalek(&tv);
-            match pk.verify_strict(&tv.message[..], &sig) {
-                Ok(_v) => print!(" V |"),
-                Err(_e) => print!(" X |"),
-            }
-        }
-        println!();
-    }
-
-    #[test]
-    fn test_boringssl() {
-        let vec = generate_test_vectors();
-
-        print!("\n|BoringSSL      |");
-        for tv in vec.iter() {
-            match ring_verify(&tv) {
-                Ok(_v) => print!(" V |"),
-                Err(_e) => print!(" X |"),
-            }
-        }
-        println!();
-    }
-
-    #[test]
-    fn test_zebra() {
-        let vec = generate_test_vectors();
-
-        print!("\n|Zebra          |");
-        for tv in vec.iter() {
-            match Signature::try_from(&tv.signature[..]) {
-                Ok(_v) => {}
-                Err(_e) => {
-                    print!(" X |");
-                    continue;
-                }
-            }
-
-            let (pk, sig) = unpack_test_vector_zebra(&tv);
-            match pk.verify(&sig, &tv.message[..]) {
-                Ok(_v) => print!(" V |"),
-                Err(_e) => print!(" X |"),
-            }
-        }
-        println!();
-    }
-
-    #[test]
-    fn test_repudiation_dalek() {
-        // Pick a random Scalar
-        let mut rng = new_rng();
-        let mut scalar_bytes = [0u8; 32];
-        rng.fill_bytes(&mut scalar_bytes);
-        let s = Scalar::from_bytes_mod_order(scalar_bytes);
-        debug_assert!(s.is_canonical());
-        debug_assert!(s != Scalar::zero());
-
-        let r0 = s * ED25519_BASEPOINT_POINT;
-        // Pick a torsion point of order 2
-        let pub_key = deserialize_point(&EIGHT_TORSION[4]).unwrap();
-        let r = r0 + pub_key.neg();
-
-        let message1 = b"Send 100 USD to Alice";
-        let message2 = b"Send 100000 USD to Alice";
-
-        debug_assert!(
-            (pub_key.neg() + compute_hram(message1, &pub_key, &r) * pub_key).is_identity()
-        );
-        debug_assert!(
-            (pub_key.neg() + compute_hram(message2, &pub_key, &r) * pub_key).is_identity()
-        );
-
-        debug_assert!(verify_cofactored(message1, &pub_key, &(r, s)).is_ok());
-        debug_assert!(verify_cofactorless(message1, &pub_key, &(r, s)).is_ok());
-        debug_assert!(verify_cofactored(message2, &pub_key, &(r, s)).is_ok());
-        debug_assert!(verify_cofactorless(message2, &pub_key, &(r, s)).is_ok());
-
-        println!(
-            "Small pk breaks non-repudiation:\n\
-             \"pub_key\": \"{}\",\n\
-             \"signature\": \"{}\",\n\
-             \"message1\": \"{}\",\n\
-             \"message2\": \"{}\"",
-            hex::encode(&pub_key.compress().as_bytes()),
-            hex::encode(&serialize_signature(&r, &s)),
-            hex::encode(&message1),
-            hex::encode(&message2),
-        );
-
-        let signature = serialize_signature(&r, &s);
-        let pk = PublicKey::from_bytes(&pub_key.compress().as_bytes()[..]).unwrap();
-        let sig = Signature::try_from(&signature[..]).unwrap();
-        debug_assert!(pk.verify(message1, &sig).is_ok());
-        debug_assert!(pk.verify(message2, &sig).is_ok());
-    }
 }
