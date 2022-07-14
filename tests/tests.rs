@@ -81,6 +81,35 @@ mod tests {
     }
 
     #[test]
+    fn test_aptos() {
+        let vec = generate_test_vectors();
+
+        print!("\n|aptos-crypto   |");
+        for tv in vec.iter() {
+            let pk = match aptos_crypto::ed25519::Ed25519PublicKey::try_from(&tv.pub_key[..]) {
+                Ok(pk) => pk,
+                Err(_e) => {
+                    print!(" X |");
+                    continue;
+                }
+            };
+            let sig = match aptos_crypto::ed25519::Ed25519Signature::try_from(&tv.signature[..]) {
+                Ok(sig) => sig,
+                Err(_e) => {
+                    print!(" X |");
+                    continue;
+                }
+            };
+            match aptos_crypto::traits::Signature::verify_arbitrary_msg(&sig, &tv.message[..], &pk) {
+                Ok(_v) => print!(" V |"),
+                Err(_e) => print!(" X |"),
+            }
+        }
+        println!();
+    }
+
+
+    #[test]
     fn test_hacl() {
         let vec = generate_test_vectors();
 
