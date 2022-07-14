@@ -3,18 +3,18 @@ mod tests {
     use anyhow::{anyhow, Result};
     use curve25519_dalek::constants::ED25519_BASEPOINT_POINT;
     use curve25519_dalek::{scalar::Scalar, traits::IsIdentity};
-    
+
     use ed25519_dalek::{PublicKey, Signature, Verifier};
     use ed25519_speccheck::{
-        compute_hram, deserialize_point, generate_test_vectors, new_rng, serialize_signature,
-        verify_cofactored, verify_cofactorless, TestVector, EIGHT_TORSION,
+        compute_hram, deserialize_point, new_rng, serialize_signature,
+        test_vectors::{generate_test_vectors, TestVector},
+        verify_cofactored, verify_cofactorless, EIGHT_TORSION,
     };
     use ed25519_zebra::{Signature as ZSignature, VerificationKey as ZPublicKey};
     use rand::RngCore;
     use ring::signature;
     use std::convert::TryFrom;
     use std::ops::Neg;
-    
 
     fn unpack_test_vector_dalek(t: &TestVector) -> (PublicKey, Signature) {
         let pk = PublicKey::from_bytes(&t.pub_key[..]).unwrap();
