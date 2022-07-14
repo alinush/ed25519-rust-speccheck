@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "load-json-file": "^6.2.0",
-    "tweetnacl": "^1.0.3"
-  }
-}

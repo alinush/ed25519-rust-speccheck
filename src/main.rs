@@ -1120,7 +1120,7 @@ mod tests {
     fn test_diem() {
         let vec = generate_test_vectors();
 
-        print!("\n|diem-crypto   |");
+        print!("\n|libra-crypto   |");
         for tv in vec.iter() {
             let pk = match diem_crypto::ed25519::Ed25519PublicKey::try_from(&tv.pub_key[..]) {
                 Ok(pk) => pk,

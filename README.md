@@ -1,17 +1,15 @@
 # ed25519-speccheck
 
-This repository generates and uses test vectors for Ed25519 signature scheme to check edge cases
-in the implementation of the algorithm. Namely, we test bounds checks on points
-and scalars involved in a signature, along with cofactored vs. cofactorless verification.
+This repository generates and uses test vectors for Ed25519 signature scheme to check **edge cases** in the implementation of the algorithm.
+Namely, we test bounds checks on points and scalars involved in a signature, along with cofactored vs. cofactorless verification.
 
-We hope this helps outline the measures needed to implement the FIPS 186-5 and
-RFC 8032 standards rigorously. For more information, read our [paper])(https://eprint.iacr.org/2020/1244, published
-[at SSR'20](https://ssr2020.mozilla.org/accepted-papers).
+We hope this helps outline the measures needed to implement the FIPS 186-5 and RFC 8032 standards rigorously.
 
-You can run this utility with `RUST_LOG=debug cargo run` to get a list of the
-test vectors and their inteded test conditions.
+For more information, read [the original paper](https://eprint.iacr.org/2020/1244), published at [SSR'20](https://ssr2020.mozilla.org/accepted-papers).
 
-# Usage
+You can run this utility with `RUST_LOG=debug cargo run` to get a list of the test vectors and their intended test conditions.
+
+## Usage
 
 To print out details on the test cases, use `RUST_LOG=debug cargo run`.
 
@@ -68,23 +66,17 @@ For a total of 12 test vectors.
 
 ## Verified libraries
 
-- [Apple CryptoKit](https://developer.apple.com/documentation/cryptokit) : in `scripts/ed25519-ios`
 - BoringSSL, through [Ring](https://github.com/briansmith/ring) : in unit tests
-- [Bouncy Castle (Java)](https://www.bouncycastle.org/java.html) version 1.66 : in `scripts/ed25519-java`
 - [Dalek](https://github.com/dalek-cryptography/ed25519-dalek) : in unit tests
-- [ed25519-donna from Signal](https://github.com/signalapp/libsignal-protocol-c.git): in `scripts/ed25519-signal-donna`
-- [ed25519-java](https://github.com/str4d/ed25519-java) version 0.3.0 : in `scripts/ed25519-java`
-- [Go-ed25519](https://golang.org/pkg/crypto/ed25519/) : in `scripts/ed25519_test.go`
-- [libra-crypto](https://github.com/libra/libra/tree/master/crypto/crypto) : in unit tests
-- LibSodium, through [pynacl](https://github.com/pyca/pynacl) : in `scripts/pynacl_test.py`
-- nCipher's ed25519, by Rob Starkey
-- [npm's ed25519](https://www.npmjs.com/package/ed25519) : in `scripts/eddsa_test`
-- [OpenSSL](https://github.com/openssl/openssl) : in `scripts openssl_3/test_script.sh`
-- [Pyca](https://cryptography.io/en/latest/) using OpenSSL 1.1.1g as default backend : in `scripts/pyca-openssl`
-- [python-ed25519](https://github.com/warner/python-ed25519)) : in `scripts/python-ed25519`
-- [ref10 from SUPERCOP through Python bindings](https://github.com/warner/python-ed25519) : in `scripts/python-ed25519.py`
-- [tweetnacl](https://www.npmjs.com/package/tweetnacl) version 1.0.3 : in `scripts/tweetnacl`
+- [libra-crypto (now diem-crypto)](https://github.com/diem/diem/tree/main/crates/diem-crypto) : in unit tests
+- [hacl-star](https://github.com/huitseeker/rust-hacl-star): in unit tests
 - [Zebra](https://github.com/ZcashFoundation/ed25519-zebra) : in unit tests
+
+You can the versions of the verified libraries in [Cargo.toml](Cargo.toml):
+
+```
+grep '\[dev-dependencies\]' Cargo.toml -A 1000
+```
 
 ## Results
 
@@ -93,37 +85,25 @@ For a total of 12 test vectors.
 |Library        | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11|
 |---------------+---+---+---+---+---+---+---+---+---+---+---+---|
 |BoringSSL      | V | V | V | V | X | X | X | X | X | X | X | V |
-|BouncyCastle   | V | V | V | V | X | X | X | X | X | X | X | X |
-|CryptoKit      | V | V | V | V | X | X | X | X | X | X | X | V |
 |Dalek          | V | V | V | V | X | X | X | X | X | X | X | V |
 |Dalek strict   | X | X | X | V | X | X | X | X | X | X | X | X |
-|ed25519-donna  | V | V | V | V | X | X | V | X | X | X | X | V |
-|ed25519-java   | V | V | V | V | X | X | V | V | X | X | V | X |
-|Go             | V | V | V | V | X | X | X | X | X | X | X | V |
 |libra-crypto   | X | X | X | V | X | X | X | X | X | X | X | X |
-|LibSodium      | X | X | X | V | X | X | X | X | X | X | X | X |
-|npm            | V | V | V | V | X | X | X | X | X | X | X | V |
-|OpenSSL-3.0    | V | V | V | V | X | X | X | X | X | X | X | V |
-|PyCA           | V | V | V | V | X | X | X | X | X | X | X | V |
-|python-ed25519 | V | V | V | V | X | X | V | V | X | X | X | V |
-|ref10          | V | V | V | V | X | X | V | X | X | X | X | V |
-|TweetNaCl-js   | V | V | V | V | X | X | V | V | X | X | X | V |
 |Zebra          | V | V | V | V | V | V | X | X | X | V | V | V |
  ---------------------------------------------------------------
 ```
 
-Contributors
-------------
+## Contribute
 
-The authors of this code are Kostas Chalkias ([@kchalkias](https://github.com/kchalkias)), François Garillot ([@huitseeker](https://github.com/huitseeker)) and Valeria Nikolaenko ([@valerini](https://github.com/valerini)).  To learn more about contributing to this project, [see this document](./CONTRIBUTING.md).
+To learn more about contributing to this project, [see this document](./CONTRIBUTING.md).
 
-#### Acknowledgments
+## Initial contributors
 
-Special thanks go to Yolan Romailler, Rajath Shanbag and Rob Starkey for contributing test
-vector results.
+This is a fork of [ed25519-speccheck](https://github.com/novifinancial/ed25519-speccheck), but for _Rust-only_ Ed25519 implementations.
 
+The initial authors of this code are Kostas Chalkias ([@kchalkias](https://github.com/kchalkias)), François Garillot ([@huitseeker](https://github.com/huitseeker)) and Valeria Nikolaenko ([@valerini](https://github.com/valerini)).
 
-License
--------
+Special thanks go to Yolan Romailler, Rajath Shanbag and Rob Starkey for contributing test vector results.
+
+## License
 
 This project is [Apache 2.0 licensed](./LICENSE).
