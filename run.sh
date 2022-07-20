@@ -21,8 +21,18 @@ main > results.md  2>/dev/null
 sed -ire  '/^|/!d' results.md
 sort -f results.md -o results-temp.md
 
+print_separator() {
+    echo "|---------------|---|---|---|---|---|---|---|---|---|---|---|---|"
+}
+
+print_header() {
+    echo "| Library name  | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11|"
+    print_separator
+}
+
 truncate --size 0 results.md
-echo "|[CGN20e] Alg.2 | X | X | V | V | V | V | X | X | X | X | X | X |" >results.md
+print_header >results.md
+#echo "|Reference Alg.2| X | X | V | V | V | V | X | X | X | X | X | X |" >>results.md
 cat results-temp.md >>results.md
 rm results-temp.md
 
@@ -57,8 +67,9 @@ out_cgn20e=`cat results.md \
     | color_output \
 `
 echo -e "$out"
-echo "|---------------|-----------------------------------------------|"
+print_separator
 echo -e "$out_dalek"
-echo "|---------------|-----------------------------------------------|"
+print_separator
+print_header
 echo -e "$out_aptos"
 echo -e "$out_cgn20e"

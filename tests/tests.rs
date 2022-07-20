@@ -6,7 +6,7 @@ mod tests {
 
     use ed25519_dalek::{PublicKey, Signature, Verifier};
     use ed25519_speccheck::{
-        compute_hram, deserialize_point, new_rng, serialize_signature,
+        algorithm2, compute_hram, deserialize_point, new_rng, serialize_signature,
         test_vectors::{generate_test_vectors, TestVector},
         verify_cofactored, verify_cofactorless, EIGHT_TORSION,
     };
@@ -53,6 +53,38 @@ mod tests {
     }
 
     #[test]
+    #[allow(non_snake_case)]
+    fn test_CGN20_algorithm2() {
+        let vec = generate_test_vectors();
+
+        print!("\n|[CGN20e] Alg.2 |");
+        for tv in vec.iter() {
+            let pk = match algorithm2::deserialize_pk(&tv.pub_key) {
+                Ok(pk) => pk,
+                Err(_) => {
+                    print!(" X |");
+                    continue;
+                }
+            };
+
+            let (s, R) = match algorithm2::deserialize_signature(&tv.signature) {
+                Ok(sR) => sR,
+                Err(_) => {
+                    print!(" X |");
+                    continue;
+                }
+            };
+
+            if algorithm2::verify_signature(&s, &R, &tv.message, &pk) {
+                print!(" V |");
+            } else {
+                print!(" X |");
+            }
+        }
+        println!();
+    }
+
+    #[test]
     fn test_diem() {
         let vec = generate_test_vectors();
 
@@ -86,28 +118,67 @@ mod tests {
 
         print!("\n|aptos-crypto   |");
         for tv in vec.iter() {
-            let pk = match aptos_crypto::ed25519::Ed25519PublicKey::try_from(&tv.pub_key[..]) {
-                Ok(pk) => pk,
-                Err(_e) => {
-                    print!(" X |");
-                    continue;
-                }
-            };
-            let sig = match aptos_crypto::ed25519::Ed25519Signature::try_from(&tv.signature[..]) {
-                Ok(sig) => sig,
-                Err(_e) => {
-                    print!(" X |");
-                    continue;
-                }
-            };
-            match aptos_crypto::traits::Signature::verify_arbitrary_msg(&sig, &tv.message[..], &pk) {
-                Ok(_v) => print!(" V |"),
-                Err(_e) => print!(" X |"),
+            if !test_aptos_helper(tv) {
+                continue
             }
         }
         println!();
     }
 
+    fn test_aptos_helper(tv: &TestVector) -> bool {
+        let pk = match aptos_crypto::ed25519::Ed25519PublicKey::try_from(&tv.pub_key[..]) {
+            Ok(pk) => pk,
+            Err(_e) => {
+                print!(" X |");
+                return false;
+            }
+        };
+        let sig = match aptos_crypto::ed25519::Ed25519Signature::try_from(&tv.signature[..]) {
+            Ok(sig) => sig,
+            Err(_e) => {
+                print!(" X |");
+                return false;
+            }
+        };
+
+        match aptos_crypto::traits::Signature::verify_arbitrary_msg(&sig, &tv.message[..], &pk)
+        {
+            Ok(_v) => {
+                print!(" V |");
+            },
+            Err(_e) => {
+                print!(" X |");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    #[test]
+    fn test_aptos_strong() {
+        let vec = generate_test_vectors();
+
+        print!("\n|aptos-crypto-st|");
+        for tv in vec.iter() {
+            // We are just manually checking the pubkey encoding is canonical
+            if !algorithm2::is_canonical_point_encoding(&tv.pub_key) {
+                print!(" X |");
+                continue;
+            }
+
+            // We are just manually checking the signature's R encoding is canonical
+            if !algorithm2::is_canonical_point_encoding(&tv.signature[..32]) {
+                print!(" X |");
+                continue;
+            }
+
+            if !test_aptos_helper(tv) {
+                continue;
+            }
+        }
+        println!();
+    }
 
     #[test]
     fn test_hacl() {

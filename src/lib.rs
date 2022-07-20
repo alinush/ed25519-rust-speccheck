@@ -20,6 +20,7 @@ extern crate string_builder;
 
 use crate::test_vectors::generate_test_vectors;
 
+pub mod algorithm2;
 mod non_reducing_scalar52;
 pub mod test_vectors;
 
